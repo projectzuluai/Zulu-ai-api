@@ -139,54 +139,82 @@ async def generate_live_app(idea: str) -> Dict[str, str]:
     os.makedirs(f"{app_dir}/backend", exist_ok=True)
     os.makedirs(f"{app_dir}/frontend", exist_ok=True)
     
-    # Backend prompt
-    backend_prompt = f'''You are an expert Python developer. Generate a complete, production-ready FastAPI backend for a '{idea}' application.
+    # Improved Backend prompt - more strict and specific
+    backend_prompt = f'''You are an expert Python developer. Generate a complete, production-ready FastAPI backend for a "{idea}". Your output MUST be a single, valid Python code file for main.py. Do not include any explanations, text outside of code comments, or markdown code blocks (no ```python or ```). The code must be runnable with `uvicorn main:app --reload` and include:
+1. FastAPI app with CORSMiddleware.
+2. Proper Pydantic models for data.
+3. At least two working endpoints (e.g., GET and POST).
+4. In-memory storage for simplicity.
+5. A root endpoint returning a welcome message.
+Return only the raw Python code.'''
 
-Requirements:
-- Create a fully functional FastAPI application
-- Include proper CORS middleware configuration
-- Add at least 5 relevant endpoints for the {idea} concept
-- Use proper HTTP status codes and error handling
-- Include Pydantic models for request/response validation
-- Add proper documentation strings
-- Make it production-ready with proper structure
-
-Return ONLY the raw Python code for main.py without any markdown formatting, explanations, or backticks. The code should be ready to save directly to a file and run.'''
-
-    # Frontend prompt  
-    frontend_prompt = f'''You are an expert React developer. Generate a complete, production-ready React component for a '{idea}' application.
-
-Requirements:
-- Create a fully functional React App component
-- Include useState and useEffect hooks
-- Add proper error handling and loading states
-- Style the component with inline CSS or CSS classes
-- Make API calls to a backend service
-- Include at least 3 interactive features relevant to {idea}
-- Add proper JSX structure and component organization
-
-Return ONLY the raw React JSX code for App.js without any markdown formatting, explanations, or backticks. The code should be ready to save directly to a file and use.'''
+    # Improved Frontend prompt - more strict and specific
+    frontend_prompt = f'''You are an expert React developer. Generate a complete React frontend for a "{idea}" that interacts with a backend API. Your output MUST be a single, valid JavaScript code file for App.js. Do not include any explanations, text outside of code comments, or markdown code blocks (no ```js or ```). The code must be for a standard Create-React-App component and include:
+1. Functional components with useState and useEffect hooks.
+2. Fetch API calls to interact with the backend.
+3. A form for creating items and a list to display them.
+4. Basic inline styling for clarity.
+Return only the raw JavaScript code.'''
 
     try:
-        # Generate backend code
-        backend_code = await generate_with_gemini(backend_prompt)
+        # Generate backend code with enhanced error handling
+        try:
+            backend_code = await generate_with_gemini(backend_prompt)
+        except Exception as e:
+            raise Exception(f"Failed to generate backend code with Gemini: {str(e)}")
         
-        # Generate frontend code  
-        frontend_code = await generate_with_gemini(frontend_prompt)
+        # Generate frontend code with enhanced error handling
+        try:
+            frontend_code = await generate_with_gemini(frontend_prompt)
+        except Exception as e:
+            raise Exception(f"Failed to generate frontend code with Gemini: {str(e)}")
         
-        # Clean up any potential markdown formatting
-        backend_code = backend_code.replace('```python', '').replace('```', '').strip()
-        frontend_code = frontend_code.replace('```javascript', '').replace('```jsx', '').replace('```', '').strip()
+        # Robust code cleaning for backend
+        clean_backend_code = backend_code.strip()
+        # Remove all markdown code block indicators if present
+        if clean_backend_code.startswith("```python"):
+            clean_backend_code = clean_backend_code.replace("```python", "").strip()
+        if clean_backend_code.startswith("```"):
+            clean_backend_code = clean_backend_code.replace("```", "").strip()
+        if clean_backend_code.endswith("```"):
+            clean_backend_code = clean_backend_code.replace("```", "").strip()
+        # Remove any remaining backticks
+        clean_backend_code = clean_backend_code.replace("```", "").strip()
+        
+        # Robust code cleaning for frontend
+        clean_frontend_code = frontend_code.strip()
+        # Remove all markdown code block indicators if present
+        if clean_frontend_code.startswith("```javascript"):
+            clean_frontend_code = clean_frontend_code.replace("```javascript", "").strip()
+        if clean_frontend_code.startswith("```js"):
+            clean_frontend_code = clean_frontend_code.replace("```js", "").strip()
+        if clean_frontend_code.startswith("```jsx"):
+            clean_frontend_code = clean_frontend_code.replace("```jsx", "").strip()
+        if clean_frontend_code.startswith("```"):
+            clean_frontend_code = clean_frontend_code.replace("```", "").strip()
+        if clean_frontend_code.endswith("```"):
+            clean_frontend_code = clean_frontend_code.replace("```", "").strip()
+        # Remove any remaining backticks
+        clean_frontend_code = clean_frontend_code.replace("```", "").strip()
+        
+        # Validate the code - check that cleaned code is not empty
+        if not clean_backend_code or len(clean_backend_code.strip()) < 10:
+            # Fall back to mock generator
+            return generate_mock_app(idea)
+        
+        if not clean_frontend_code or len(clean_frontend_code.strip()) < 10:
+            # Fall back to mock generator
+            return generate_mock_app(idea)
         
         # Write files
         backend_file = f"{app_dir}/backend/main.py"
         frontend_file = f"{app_dir}/frontend/App.js"
         
         with open(backend_file, 'w') as f:
-            f.write(backend_code)
+            f.write(clean_backend_code)
         
         with open(frontend_file, 'w') as f:
-            f.write(frontend_code)
+            f.write(clean_frontend_code)
         
         return {
             "backend": backend_file,
@@ -194,4 +222,5 @@ Return ONLY the raw React JSX code for App.js without any markdown formatting, e
         }
     
     except Exception as e:
-        raise Exception(f"Error generating live app: {str(e)}")
+        # Enhanced error handling with clear error message
+        raise Exception(f"Failed to generate code with Gemini: {str(e)}")

@@ -1,0 +1,51 @@
+You are an expert Python engineer. Your task is to perfect the `generate_live_app` function in `backend/app/services/codegen.py` to reliably generate working code using the Google Gemini API.
+
+**Current Problem:** The function might not properly clean the Gemini response or structure the prompts effectively, leading to errors or non-functional code.
+
+**Step-by-Step Instructions:**
+
+1.  **Review the existing `generate_live_app` function.**
+
+2.  **Improve the AI Prompts:** Make the prompts more strict and specific to force Gemini to return *only pure, runnable code*.
+    *   **Backend Prompt Must Include:**
+        ```
+        "You are an expert Python developer. Generate a complete, production-ready FastAPI backend for a \"{idea}\". Your output MUST be a single, valid Python code file for main.py. Do not include any explanations, text outside of code comments, or markdown code blocks (no ```python or ```). The code must be runnable with `uvicorn main:app --reload` and include:
+        1. FastAPI app with CORSMiddleware.
+        2. Proper Pydantic models for data.
+        3. At least two working endpoints (e.g., GET and POST).
+        4. In-memory storage for simplicity.
+        5. A root endpoint returning a welcome message.
+        Return only the raw Python code."
+        ```
+    *   **Frontend Prompt Must Include:**
+        ```
+        "You are an expert React developer. Generate a complete React frontend for a \"{idea}\" that interacts with a backend API. Your output MUST be a single, valid JavaScript code file for App.js. Do not include any explanations, text outside of code comments, or markdown code blocks (no ```js or ```). The code must be for a standard Create-React-App component and include:
+        1. Functional components with useState and useEffect hooks.
+        2. Fetch API calls to interact with the backend.
+        3. A form for creating items and a list to display them.
+        4. Basic inline styling for clarity.
+        Return only the raw JavaScript code."
+        ```
+
+3.  **Enhance Error Handling:** Wrap the `generate_with_gemini` call in a try-catch block. If it fails, log the error and raise a clear exception: `f"Failed to generate code with Gemini: {str(e)}"`
+
+4.  **Robust Code Cleaning:** After getting the response from Gemini, perform these steps:
+    ```python
+    # Clean the backend code
+    clean_backend_code = backend_code.strip()
+    # Remove all markdown code block indicators if present
+    if clean_backend_code.startswith("```python"):
+        clean_backend_code = clean_backend_code.replace("```python", "").strip()
+    if clean_backend_code.startswith("```"):
+        clean_backend_code = clean_backend_code.replace("```", "").strip()
+    if clean_backend_code.endswith("```"):
+        clean_backend_code = clean_backend_code.replace("```", "").strip()
+
+    # Do the same cleaning for the frontend code, checking for "```javascript" and "```js"
+    ```
+
+5.  **Validate the Code:** Before writing the file, check that the cleaned code is not empty. If it is, fall back to the mock generator or raise a clear error.
+
+6.  **Test the Function:** After making these changes, ensure the function can be imported and called without syntax errors.
+
+Your goal is to make the `/api/v1/generate_app` endpoint successfully call the Gemini API, clean the response, and save working code files when `AI_MODE=live`. Do not break the existing mock functionality.

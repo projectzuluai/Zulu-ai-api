@@ -1,0 +1,79 @@
+You are an expert Python developer. Create a production-ready FastAPI backend for **Zulu AI API**, an app generator service.
+
+**🔹 Project Structure:**
+Create these files and folders at the root of the Replit workspace:
+- `backend/app/__init__.py`
+- `backend/app/main.py`
+- `backend/app/core/__init__.py`
+- `backend/app/core/config.py`
+- `backend/app/routes/__init__.py`
+- `backend/app/routes/generate.py`
+- `backend/app/services/__init__.py`
+- `backend/app/services/codegen.py`
+- `requirements.txt`
+- `.env`
+- `.gitignore`
+- `README.md`
+- `generated/.gitkeep` (important: an empty file to preserve the folder in Git)
+
+**🔹 Technical Requirements:**
+
+1.  **Dependencies (`requirements.txt`):**
+    ```txt
+    fastapi[standard]
+    uvicorn[standard]
+    python-multipart
+    python-dotenv
+    python-slugify
+    google-generativeai
+    ```
+
+2.  **Configuration (`backend/app/core/config.py`):**
+    Use Pydantic Settings to load environment variables from a `.env` file. Settings must include:
+    - `app_name: str = "Zulu AI API"`
+    - `ai_mode: str = "mock"` (default)
+    - `gemini_api_key: str = None`
+
+3.  **Main Application (`backend/app/main.py`):**
+    - Create a FastAPI app with CORS middleware enabled (allow all origins for now).
+    - Include a root endpoint `GET /` that returns a welcome message and a health check endpoint `GET /health`.
+    - Mount the router from `routes/generate.py` at the prefix `/api/v1`.
+
+4.  **Routes (`backend/app/routes/generate.py`):**
+    - Define a `POST /generate_app` endpoint.
+    - Use a Pydantic model `GenerationRequest` with a required `idea: str` field.
+    - Based on the `AI_MODE` env var, call the appropriate service function.
+    - Return a JSON response detailing the created files or errors.
+
+5.  **Services (`backend/app/services/codegen.py`):**
+    - **`generate_mock_app(idea: str) -> dict`:** A fallback function that creates hardcoded example React and FastAPI files in the `generated/` folder. Returns a dict of created file paths.
+    - **`generate_with_gemini(prompt: str) -> str`:** An async helper function that uses the `google.generativeai` library to send a prompt to the Gemini API and return the cleaned text response.
+    - **`generate_live_app(idea: str) -> dict`:** An async function that uses `generate_with_gemini` to create two detailed prompts: one for a complete FastAPI backend (`main.py`) and one for a React frontend (`App.js`). It saves the generated code to the `generated/` folder and returns a dict of created file paths.
+
+6.  **Environment File (`.env`):**
+    ```bash
+    AI_MODE=mock
+    GEMINI_API_KEY=your_gemini_api_key_here
+    ```
+
+7.  **Gitignore (`.gitignore`):**
+    Ensure it ignores virtual environments, `__pycache__`, and the `.env` file, but explicitly keeps the `generated/` folder structure (using `!generated/.gitkeep`).
+
+8.  **README.md:**
+    Include clear instructions on how to install dependencies, set up the `.env` file, run the server with `uvicorn backend.app.main:app --reload`, and switch between `mock` and `live` AI modes.
+
+**🔹 Key Implementation Details:**
+- The `generated/` folder must be created automatically by the service functions.
+- Use the `slugify` package to convert the user's "idea" into a safe folder name.
+- All code must be production-ready, with proper error handling and input validation.
+- In `generate_live_app`, craft specific, detailed prompts for Gemini that demand complete, runnable code files and insist the response contains only raw code without markdown backticks.
+
+**🔹 Example Flow for `AI_MODE=live`:**
+1.  User POSTs `{"idea": "note taking app"}`
+2.  Your function creates a prompt for Gemini: "You are an expert Python developer. Generate a complete, production-ready FastAPI backend for a 'note taking app'... Return ONLY the raw Python code..."
+3.  Gemini returns the code for `backend/main.py`.
+4.  Your function saves it to `generated/note-taking-app/backend/main.py`.
+5.  Repeat the process for the React frontend.
+6.  Respond with: `{"message": "App generated with Gemini!", "generated_files": {...}}`
+
+Build this entire application end-to-end. Do not skip any files.

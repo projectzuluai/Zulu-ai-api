@@ -1,0 +1,13 @@
+fastapi[standard]
+uvicorn[standard]
+python-multipart
+python-dotenv
+python-slugify
+google-generativeai
+fastapi[standard]
+google-generativeai
+python-dotenv
+python-multipart
+python-slugify
+uvicorn[standard]
+pydantic-settings

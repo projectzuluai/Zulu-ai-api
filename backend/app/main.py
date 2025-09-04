@@ -13,25 +13,27 @@ load_dotenv()
 app = FastAPI(
     title=settings.app_name,
     description="An AI-powered app generator service",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",       # Swagger
+    redoc_url="/redoc"      # ReDoc
 )
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["*"],  # TODO: Restrict in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
+# Routers
 app.include_router(generate_router, prefix="/api/v1", tags=["generation"])
 
 
-@app.get("/")
+@app.get("/", tags=["root"])
 async def root():
-    """Welcome endpoint."""
+    """Root welcome endpoint."""
     return {
         "message": f"Welcome to {settings.app_name}!",
         "version": "1.0.0",
@@ -39,9 +41,9 @@ async def root():
     }
 
 
-@app.get("/health")
+@app.get("/health", tags=["system"])
 async def health():
-    """Health check endpoint."""
+    """Health check endpoint for monitoring/deployment."""
     return {
         "status": "healthy",
         "app_name": settings.app_name,
@@ -55,6 +57,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "backend.app.main:app",
         host="0.0.0.0",
-        port=5000,
+        port=int(os.getenv("PORT", 5000)),  # Use Render's dynamic port
         reload=True
     )

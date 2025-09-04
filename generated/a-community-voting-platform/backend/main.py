@@ -1,28 +1,40 @@
-from fastapi import FastAPI
+# main.py
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
-app = FastAPI(title="A Community Voting Platform API")
+app = FastAPI()
+
+origins = ["*"] #Production: Replace with specific origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+class Vote(BaseModel):
+    option: str = Field(..., min_length=1, max_length=100)
+
+votes = {}
+
 @app.get("/")
 async def root():
-    return {"message": "Welcome to A Community Voting Platform API"}
+    return {"message": "Welcome to the Community Voting Platform!"}
 
-@app.get("/health")
-async def health():
-    return {"status": "healthy"}
+@app.get("/votes")
+async def get_votes():
+    return votes
 
-@app.get("/items")
-async def get_items():
-    return {"items": ["Item 1", "Item 2", "Item 3"]}
+@app.post("/votes")
+async def post_vote(vote: Vote):
+    if vote.option not in votes:
+        votes[vote.option] = 0
+    votes[vote.option] += 1
+    return {"message": f"Vote for '{vote.option}' recorded successfully."}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    return {"detail": exc.detail, "status_code": exc.status_code}

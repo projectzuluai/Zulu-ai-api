@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 import os
 
 
@@ -18,10 +18,10 @@ class Settings(BaseSettings):
 
     def validate(self):
         if self.ai_mode == "live" and not self.gemini_configured:
-            raise ValidationError("AI_MODE is 'live' but GEMINI_API_KEY is missing.")
+            raise ValueError("AI_MODE is 'live' but GEMINI_API_KEY is missing.")
 
 settings = Settings()
 try:
     settings.validate()
-except ValidationError as e:
+except Exception as e:
     print(f"[Zulu AI API] Configuration error: {e}")

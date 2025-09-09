@@ -4,6 +4,9 @@ from typing import Dict
 from slugify import slugify
 import google.generativeai as genai
 from backend.app.core.config import settings
+import logging
+
+logger = logging.getLogger("zulu-ai-api")
 
 
 def generate_mock_app(idea: str) -> Dict[str, str]:
@@ -161,12 +164,14 @@ Return only the raw JavaScript code.'''
         try:
             backend_code = await generate_with_gemini(backend_prompt)
         except Exception as e:
+            logger.error(f"Gemini API error: {e}")
             raise Exception(f"Failed to generate backend code with Gemini: {str(e)}")
         
         # Generate frontend code with enhanced error handling
         try:
             frontend_code = await generate_with_gemini(frontend_prompt)
         except Exception as e:
+            logger.error(f"Gemini API error: {e}")
             raise Exception(f"Failed to generate frontend code with Gemini: {str(e)}")
         
         # Robust code cleaning for backend

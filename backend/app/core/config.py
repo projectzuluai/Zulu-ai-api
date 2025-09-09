@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, ValidationError
 from pydantic_settings import BaseSettings
+from pydantic import BaseModel, Field, ValidationError
 import os
 
 

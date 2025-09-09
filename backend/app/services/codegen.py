@@ -5,6 +5,7 @@ from slugify import slugify
 import google.generativeai as genai
 from backend.app.core.config import settings
 import logging
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger("zulu-ai-api")
 

@@ -27,10 +27,16 @@ app = FastAPI(
     redoc_url="/redoc"      # ReDoc
 )
 
-# CORS setup for production security
+# ✅ CORS setup (allow frontend + local testing)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://your-frontend-domain.com"],  # Change to your frontend domain
+    allow_origins=[
+        "*",   # Allow all for now (change to specific domains in prod)
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://zulu-ai-frontend.onrender.com",
+        "https://<your-lovable-preview-domain>"  # replace if you know it
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
